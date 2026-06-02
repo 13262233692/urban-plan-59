@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>参数化城市街区生成器</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="canvas-container"></div>
+    
+    <div class="controls-hint">
+      <h4>🎮 控制说明</h4>
+      <ul>
+        <li><strong>WASD</strong> 移动</li>
+        <li><strong>鼠标</strong> 视角</li>
+        <li><strong>空格</strong> 上升</li>
+        <li><strong>Shift</strong> 下降</li>
+        <li><strong>点击画布</strong> 锁定鼠标</li>
+      </ul>
+    </div>
+
+    <div class="control-panel">
+      <h2>🏙️ 城市生成器</h2>
+      
+      <div class="control-group">
+        <h3>📐 地块参数</h3>
+        <div class="control-item">
+          <label>
+            <span>城市大小</span>
+            <span class="value" id="citySizeValue">4</span>
+          </label>
+          <input type="range" id="citySize" min="2" max="8" value="4" step="1">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>地块大小</span>
+            <span class="value" id="lotSizeValue">40</span>
+          </label>
+          <input type="range" id="lotSize" min="20" max="80" value="40" step="5">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>分割深度</span>
+            <span class="value" id="splitDepthValue">3</span>
+          </label>
+          <input type="range" id="splitDepth" min="1" max="5" value="3" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>🏢 建筑参数</h3>
+        <div class="control-item">
+          <label>
+            <span>最小高度</span>
+            <span class="value" id="minHeightValue">20</span>
+          </label>
+          <input type="range" id="minHeight" min="5" max="50" value="20" step="5">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>最大高度</span>
+            <span class="value" id="maxHeightValue">100</span>
+          </label>
+          <input type="range" id="maxHeight" min="30" max="200" value="100" step="10">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>建筑密度</span>
+            <span class="value" id="densityValue">0.7</span>
+          </label>
+          <input type="range" id="density" min="0.3" max="1" value="0.7" step="0.05">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>🛣️ 道路参数</h3>
+        <div class="control-item">
+          <label>
+            <span>主路宽度</span>
+            <span class="value" id="mainRoadWidthValue">8</span>
+          </label>
+          <input type="range" id="mainRoadWidth" min="4" max="15" value="8" step="1">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>支路宽度</span>
+            <span class="value" id="secondaryRoadWidthValue">5</span>
+          </label>
+          <input type="range" id="secondaryRoadWidth" min="2" max="10" value="5" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>⚙️ 渲染设置</h3>
+        <div class="control-item">
+          <label>
+            <span>显示线框</span>
+            <input type="checkbox" id="wireframe">
+          </label>
+        </div>
+        <div class="control-item">
+          <label>
+            <span>阴影效果</span>
+            <input type="checkbox" id="shadows" checked>
+          </label>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>☀️ 日照分析</h3>
+        <div class="control-item">
+          <label>
+            <span>启用日照模拟</span>
+            <input type="checkbox" id="sunlightEnabled">
+          </label>
+        </div>
+        <div class="control-item">
+          <label>
+            <span>时间 (时)</span>
+            <span class="value" id="sunHourValue">12</span>
+          </label>
+          <input type="range" id="sunHour" min="5" max="20" value="12" step="1">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>月份</span>
+            <span class="value" id="sunMonthValue">6</span>
+          </label>
+          <input type="range" id="sunMonth" min="1" max="12" value="6" step="1">
+        </div>
+        <div class="control-item">
+          <label>
+            <span>纬度</span>
+            <span class="value" id="latitudeValue">39.9°</span>
+          </label>
+          <input type="range" id="latitude" min="20" max="50" value="39.9" step="0.1">
+        </div>
+        <button class="btn btn-secondary" id="analyzeSunlight">📊 分析日照</button>
+      </div>
+
+      <div class="control-group">
+        <h3>🔥 热力图</h3>
+        <div class="control-item">
+          <label>
+            <span>显示热力图</span>
+            <input type="checkbox" id="heatmapEnabled">
+          </label>
+        </div>
+        <div class="control-item">
+          <label>
+            <span>热力图模式</span>
+            <select id="heatmapMode" class="control-select">
+              <option value="floorAreaRatio">容积率</option>
+              <option value="buildingHeight">建筑高度</option>
+              <option value="populationDensity">人口密度</option>
+              <option value="sunlightExposure">日照暴露</option>
+            </select>
+          </label>
+        </div>
+        <div class="control-item">
+          <label>
+            <span>配色方案</span>
+            <select id="colorScheme" class="control-select">
+              <option value="viridis">Viridis</option>
+              <option value="plasma">Plasma</option>
+              <option value="heat">热力</option>
+              <option value="rainbow">彩虹</option>
+            </select>
+          </label>
+        </div>
+        <div class="control-item">
+          <label>
+            <span>不透明度</span>
+            <span class="value" id="heatmapOpacityValue">0.7</span>
+          </label>
+          <input type="range" id="heatmapOpacity" min="0.3" max="1" value="0.7" step="0.1">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="generateBtn">🔄 重新生成</button>
+      <button class="btn btn-secondary" id="randomBtn">🎲 随机生成</button>
+    </div>
+
+    <div class="info-panel">
+      <div class="stat">
+        <span class="stat-label">建筑数量:</span>
+        <span class="stat-value" id="buildingCount">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">地块数量:</span>
+        <span class="stat-value" id="lotCount">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">FPS:</span>
+        <span class="stat-value" id="fps">60</span>
+      </div>
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+      正在生成城市...
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
